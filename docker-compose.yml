@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  plex-partial-scan:
+    image: alpine:latest
+    container_name: plex-partial-scan
+    restart: unless-stopped
+    volumes:
+      - /mnt/decypharr/shows/torrents:/mnt/decypharr/shows/torrents:ro
+      - /mnt/decypharr/movies/torrents:/mnt/decypharr/movies/torrents:ro
+      - ./watch.sh:/watch.sh:ro
+      - ./plex-scan.conf:/config/plex-scan.conf:ro
+    command: |
+      sh -c " apk add --no-cache bash curl && /watch.sh "
+networks: {}

@@ -1,0 +1,5 @@
+# Snapshots (état des fichiers surveillés)
+snapshots/
+
+# Config avec credentials
+# plex-scan.conf

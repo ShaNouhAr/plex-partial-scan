@@ -1,12 +1,15 @@
-version: "3.8"
 services:
   plex-partial-scan:
     image: alpine:latest
     container_name: plex-partial-scan
     restart: unless-stopped
     volumes:
-      - /mnt/decypharr/shows/torrents:/mnt/decypharr/shows/torrents:ro
-      - /mnt/decypharr/movies/torrents:/mnt/decypharr/movies/torrents:ro
+      - type: bind
+        source: /mnt
+        target: /mnt
+        read_only: true
+        bind:
+          propagation: rslave
       - ./watch.sh:/watch.sh:ro
       - ./plex-scan.conf:/config/plex-scan.conf:ro
     command: |

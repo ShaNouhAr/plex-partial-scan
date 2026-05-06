@@ -9,8 +9,32 @@ fi
 
 . "$CONFIG_FILE"
 
+FIND_TIMEOUT=${FIND_TIMEOUT:-60}
+
 echo "▶️ Démarrage surveillance multi-watchdir (polling, compatible rclone)"
 echo "$WATCHDIRS"
+
+snapshot_files() {
+  watch_path="$1"
+  output_file="$2"
+  unsorted_file=$(mktemp)
+
+  if [ ! -d "$watch_path" ]; then
+    echo "⚠️  Dossier inaccessible, attente du retour du montage : $watch_path"
+    rm -f "$unsorted_file"
+    return 1
+  fi
+
+  if ! timeout "$FIND_TIMEOUT" find "$watch_path" -type f > "$unsorted_file" 2>/dev/null; then
+    echo "⚠️  Lecture impossible ou trop longue, état conservé : $watch_path"
+    rm -f "$unsorted_file"
+    return 1
+  fi
+
+  sort "$unsorted_file" > "$output_file"
+  rm -f "$unsorted_file"
+  return 0
+}
 
 scan_plex() {
   lib_id="$1"
@@ -48,11 +72,20 @@ for entry in $WATCHDIRS; do
   (
     echo "👀 Surveillance de $WATCH_PATH"
     PREV=$(mktemp)
-    find "$WATCH_PATH" -type f 2>/dev/null | sort > "$PREV"
+
+    until snapshot_files "$WATCH_PATH" "$PREV"; do
+      sleep "$INTERVAL"
+    done
 
     while true; do
       CURR=$(mktemp)
-      find "$WATCH_PATH" -type f 2>/dev/null | sort > "$CURR"
+
+      if ! snapshot_files "$WATCH_PATH" "$CURR"; then
+        rm -f "$CURR"
+        sleep "$INTERVAL"
+        continue
+      fi
+
       NEW_FILES=$(comm -13 "$PREV" "$CURR")
 
       if [ -n "$NEW_FILES" ]; then

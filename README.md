@@ -34,10 +34,10 @@ Un conteneur Docker léger qui surveille vos dossiers médias et déclenche auto
    PLEX_TOKEN=YOUR_PLEX_TOKEN
 
    # WATCHDIRS
-   # format : chemin_dans_conteneur | plex_lib_id | label
+   # format : chemin_dans_conteneur | plex_lib_id | label | chemin_plex
    WATCHDIRS="
-   /mnt/media/series|2|series
-   /mnt/media/films|1|films
+   /mnt/media/series|2|series|/data/series
+   /mnt/media/films|1|films|/data/films
    "
    ```
 
@@ -46,9 +46,15 @@ Un conteneur Docker léger qui surveille vos dossiers médias et déclenche auto
    Modifiez les volumes pour correspondre à vos chemins :
    ```yaml
    volumes:
-     - /chemin/vers/vos/series:/mnt/media/series:ro
-     - /chemin/vers/vos/films:/mnt/media/films:ro
+     - type: bind
+       source: /chemin/parent/du/montage
+       target: /mnt/media
+       read_only: true
+       bind:
+         propagation: rslave
    ```
+
+   Pour un montage rclone/FUSE démonté puis remonté côté hôte, montez le dossier parent du point de montage avec `propagation: rslave`. Par exemple, si rclone monte `/mnt/decypharr`, utilisez `source: /mnt` et `target: /mnt`.
 
 4. **Lancer le conteneur**
    ```bash
@@ -71,12 +77,13 @@ Un conteneur Docker léger qui surveille vos dossiers médias et déclenche auto
 
 Chaque ligne suit le format :
 ```
-chemin_dans_conteneur|id_bibliotheque_plex|label
+chemin_dans_conteneur|id_bibliotheque_plex|label|chemin_plex
 ```
 
 - **chemin_dans_conteneur** : Chemin du dossier tel que monté dans le conteneur
 - **id_bibliotheque_plex** : ID de la section Plex (voir ci-dessous)
 - **label** : Nom pour les logs (informatif)
+- **chemin_plex** : Chemin de base tel que Plex le voit
 
 ### 🔑 Obtenir son token Plex
 

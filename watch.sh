@@ -86,6 +86,13 @@ for entry in $WATCHDIRS; do
         continue
       fi
 
+      if [ ! -s "$CURR" ] && [ -s "$PREV" ]; then
+        echo "⚠️  Liste vide détectée, baseline conservée : $WATCH_PATH"
+        rm -f "$CURR"
+        sleep "$INTERVAL"
+        continue
+      fi
+
       NEW_FILES=$(comm -13 "$PREV" "$CURR")
 
       if [ -n "$NEW_FILES" ]; then
